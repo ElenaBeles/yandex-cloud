@@ -10,24 +10,8 @@ variable "region_id" {
   type        = string
 }
 
-variable "folder_api_id" {
+variable "api_gateway_name" {
   type        = string
-}
-
-
-variable "api_gateway" {
-  type        = string
-  description = "Function memory"
-}
-
-variable "bucket_name" {
-  type        = string
-  description = "Function memory"
-}
-
-variable "account_id" {
-  type        = string
-  description = "Function memory"
 }
 
 variable "bd_name" {
@@ -50,27 +34,11 @@ variable "token" {
   type        = string
 }
 
-variable "queue_url" {
-  type        = string
-}
-
 variable "aws_access_key_id" {
   type        = string
 }
 
 variable "aws_access_key" {
-  type        = string
-}
-
-variable "aws_region" {
-  type        = string
-}
-
-variable "faces_bucket_name" {
-  type        = string
-}
-
-variable "photo_bucket_name" {
   type        = string
 }
 
@@ -91,5 +59,9 @@ variable "bucket_name_photo" {
 }
 
 variable "bucket_name_faces" {
+  type        = string
+}
+
+variable "queue_url" {
   type        = string
 }

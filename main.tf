@@ -53,7 +53,7 @@ resource "yandex_function" "face" {
     entrypoint         = "face-cut.handler"
     memory             = "128"
     execution_timeout  = "10"
-    service_account_id = var.account_id
+    service_account_id = yandex_iam_service_account.sa.id
     tags               = ["my_tag"]
     folder_id                = var.folder_id
 
@@ -62,12 +62,11 @@ resource "yandex_function" "face" {
     }
 
     environment = {
-      QUEUE_URL = var.queue_url
       AWS_ACCESS_KEY_ID = var.aws_access_key_id
       AWS_ACCESS_KEY = var.aws_access_key
-      AWS_REGION = var.aws_region
-      FACES_BUCKET_NAME = var.faces_bucket_name
-      PHOTO_BUCKET_NAME = var.photo_bucket_name
+      AWS_REGION = var.region_id
+      FACES_BUCKET_NAME = var.bucket_name_faces
+      PHOTO_BUCKET_NAME = var.bucket_name_photo
       USER_STORAGE_URL = var.user_storage_url
       TABLE_NAME = var.table_name
     }
@@ -86,7 +85,7 @@ resource "yandex_function" "face-detection" {
     entrypoint         = "face-detection.handler"
     memory             = "128"
     execution_timeout  = "10"
-    service_account_id = var.account_id
+    service_account_id = yandex_iam_service_account.sa.id
     tags               = ["my_tag"]
     folder_id                = var.folder_id
 
@@ -98,9 +97,9 @@ resource "yandex_function" "face-detection" {
       QUEUE_URL = var.queue_url
       AWS_ACCESS_KEY_ID = var.aws_access_key_id
       AWS_ACCESS_KEY = var.aws_access_key
-      AWS_REGION = var.aws_region
-      FACES_BUCKET_NAME = var.faces_bucket_name
-      PHOTO_BUCKET_NAME = var.photo_bucket_name
+      AWS_REGION = var.region_id
+      FACES_BUCKET_NAME = var.bucket_name_faces
+      PHOTO_BUCKET_NAME = var.bucket_name_photo
       USER_STORAGE_URL = var.user_storage_url
       TABLE_NAME = var.table_name
       TOKEN = var.token
@@ -109,7 +108,7 @@ resource "yandex_function" "face-detection" {
 
 resource "yandex_ydb_database_serverless" "vvot01-db-photo-face" {
   name                = var.bd_name
-  folder_id = var.folder_api_id
+  folder_id = var.folder_id
   deletion_protection = true
 
   serverless_database {
@@ -121,8 +120,8 @@ resource "yandex_ydb_database_serverless" "vvot01-db-photo-face" {
 }
 
 resource "yandex_api_gateway" "vvot01-apigw" {
-  name = var.api_gateway
-  folder_id = var.folder_api_id
+  name = var.api_gateway_name
+  folder_id = var.folder_id
   spec = <<-EOT
     openapi: 3.0.0
     info:
@@ -141,9 +140,9 @@ resource "yandex_api_gateway" "vvot01-apigw" {
 
           x-yc-apigateway-integration:
               type: object_storage
-              bucket: ${var.bucket_name}
+              bucket: ${var.bucket_name_faces}
               object: '{file}'
               error_object: error.html
-              service_account_id: ${var.account_id}
+              service_account_id: ${yandex_iam_service_account.sa.id}
   EOT
 }
