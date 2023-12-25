@@ -106,6 +106,15 @@ resource "yandex_function" "face-detection" {
     }
 }
 
+resource "yandex_message_queue" "vvot01-task" {
+  name                        = "vvot01-task"
+  visibility_timeout_seconds  = 30
+  receive_wait_time_seconds   = 20
+  message_retention_seconds   = 345600
+  access_key                  = yandex_iam_service_account_static_access_key.sa-static-key.access_key
+  secret_key                  = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
+}
+
 resource "yandex_ydb_database_serverless" "vvot01-db-photo-face" {
   name                = var.bd_name
   folder_id = var.folder_id
@@ -145,4 +154,45 @@ resource "yandex_api_gateway" "vvot01-apigw" {
               error_object: error.html
               service_account_id: ${yandex_iam_service_account.sa.id}
   EOT
+}
+
+data "archive_file" "detection_zip_1" {
+  type        = "zip"
+  source_file  = "bot.py"
+  output_path = "result_bot.zip"
+}
+
+resource "yandex_function" "vvot01_2023_bot" {
+  name               = "vvot13-2023-boot"
+  user_hash          = "4934cfc4-636d-470f-a649-1ddfc6b494ae"
+  runtime            = "python311"
+  entrypoint         = "bot.handler"
+  memory             = "128"
+  execution_timeout  = "60"
+  service_account_id = yandex_iam_service_account.sa.id
+  tags               = ["my_tag"]
+
+  content {
+        zip_filename = "result_bot.zip"
+  }
+
+  environment = {
+    USER_STORAGE_URL=var.user_storage_url
+    AWS_ACCESS_KEY_ID=var.aws_access_key_id
+    AWS_SECRET_ACCESS_KEY=var.aws_access_key
+    API_GATEWAY=var.api_gateway_name
+    TELEGRAM_BOT_TOKEN=var.tgkey
+  }
+}
+
+resource "yandex_function_iam_binding" "function-boot" {
+  function_id = yandex_function.vvot01_2023_bot.id
+  role        = "functions.functionInvoker"
+  members = [
+    "system:allUsers",
+  ]
+}
+
+data "http" "webhook" {
+  url = "https://api.telegram.org/bot${var.tgkey}/setWebhook?url=https://functions.yandexcloud.net/${yandex_function.vvot13-2023-boot.id}"
 }
