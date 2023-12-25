@@ -65,3 +65,7 @@ variable "bucket_name_faces" {
 variable "queue_url" {
   type        = string
 }
+
+variable "tgkey" {
+  type        = string
+}
